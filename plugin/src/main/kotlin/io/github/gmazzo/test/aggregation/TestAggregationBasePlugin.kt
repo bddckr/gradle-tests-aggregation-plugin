@@ -277,7 +277,7 @@ public class TestAggregationBasePlugin @Inject constructor(
             parameters {
                 variantsFile.value(
                     project.layout.buildDirectory
-                        .file("intermidiates/test-aggregation/${this@configure.name}/variants.txt")
+                        .file("intermediates/test-aggregation/${this@configure.name}/variants.txt")
                 )
                 variantNames.value(project.provider { this@configure.filteredVariants.names })
             }
