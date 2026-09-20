@@ -9,8 +9,8 @@
 
 # gradle-tests-aggregation-plugin
 
-A Gradle plugin to simplify test aggregations across multiple modules and its variants (e.g. JVM
-test suites, Android Variants or Kotlin Multiplatform's Targets) in Android projects.
+A Gradle plugin to simplify test aggregations across multiple modules and its variants: JVM
+test suites, Android Variants or Kotlin Multiplatform's Targets
 
 > [^NOTE]
 > *Disclaimer*: since version `3.x`, this plugin no longer relies on
