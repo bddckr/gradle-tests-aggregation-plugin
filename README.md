@@ -12,7 +12,7 @@
 A Gradle plugin to simplify test aggregations across multiple modules and its variants: JVM
 test suites, Android Variants or Kotlin Multiplatform's Targets
 
-> [^NOTE]
+> [!NOTE]
 > *Disclaimer*: since version `3.x`, this plugin no longer relies on
 > [JaCoCo Report Aggregation Plugin](https://docs.gradle.org/current/userguide/jacoco_report_aggregation_plugin.html)
 > neither
@@ -163,7 +163,7 @@ testOptions {
 }
 ```
 
-> [^CAUTION]
+> [!CAUTION]
 > With this set, the build will fail if no connected devices are available.
 
 Also, [Managed Devices](https://developer.android.com/studio/test/managed-devices) are supported,
