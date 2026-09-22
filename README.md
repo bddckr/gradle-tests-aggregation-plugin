@@ -33,7 +33,12 @@ plugins {
 Then use the `aggregatedTestsReport` to generate the reports (at its default locations):
 
 - `build/reports/aggregated-test-coverage` for coverage
+  ![Aggregated Coverage Report example](README-aggregated-jacoco-report.png)
+
 - `build/reports/aggregated-test-results` for test results
+  The task `:jacocoAggregatedReport` is added to the root project when applying this plugin and it can be
+  run to produce the report. All dependent `test` tasks will be run too to produce the required execution data.
+  ![Aggregated Test Results Report example](README-aggregated-test-report.png)
 
 The plugin will automatically detect and aggregate:
 
