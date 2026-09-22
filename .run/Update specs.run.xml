@@ -10,8 +10,7 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value="collectExpectedReports" />
-          <option value="plugin:updateSpecs" />
+          <option value="updateSpecs" />
         </list>
       </option>
       <option name="vmOptions" />

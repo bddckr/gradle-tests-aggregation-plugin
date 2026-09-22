@@ -51,32 +51,74 @@ subprojects {
 
 val aggregatedReportsSpecs = layout.projectDirectory.dir("specs/aggregated-reports")
 
-val reportsSpec = copySpec {
+fun Sync.reportsSpec(): CopySpec {
+    val rootDir = rootDir.absolutePath
     val dataSortRegEx = "\\bdata-sort-value=\"\\d+\"".toRegex()
     val tookRegEx = "\\b\\d+(?:\\.\\d+)?s\\b|(?<=\\btime=\")\\d+(?:\\.\\d+)?(?=\")".toRegex()
     val attrsRegEx = "\\b(timestamp|hostname)=\"[^\"]+\"\\s+".toRegex()
+    val spansTimeRegEx =
+        "\\d{4}-\\d?\\d-\\d?\\d \\d?\\d:\\d?\\d:\\d?\\d(?:\\.\\d+ \\w+)?".toRegex()
+    val emulatorName = "\\bemulator-\\d+\\s*-?\\s*\\d*\\b".toRegex()
+    val androidHome = providers.environmentVariable("ANDROID_HOME").get()
+    val coverageTask = tasks.aggregatedTestCoverageReport
+    val resultsTypes = tasks.aggregatedTestResultsReport
 
-    into("coverage") {
-        from(tasks.aggregatedTestCoverageReport) { include("**/*.csv") }
-    }
-    into("tests") {
-        from(tasks.aggregatedTestResultsReport)
-    }
-    filter {
-        when {
-            it.startsWith("<a href=\"https://www.gradle.org\">") -> ""
-            else -> it
-                .replace(attrsRegEx, "")
-                .replace(dataSortRegEx, "data-sort-value=\"100\"")
-                .replace(tookRegEx, "0.100s")
+    return project.copySpec {
+        into("coverage") {
+            from(coverageTask) { include("**/*.csv") }
+        }
+        into("tests") {
+            from(resultsTypes)
+        }
+        filter {
+            when {
+                it.startsWith("<a href=\"https://www.gradle.org\">") -> ""
+                else -> it
+                    .replace(attrsRegEx, "")
+                    .replace(dataSortRegEx, "data-sort-value=\"100\"")
+                    .replace(tookRegEx, "0.100s")
+                    .replace(spansTimeRegEx, "2016-01-01 00:00")
+                    .replace(emulatorName, "emulator-XXXX")
+                    .replace(rootDir, "")
+                    .replace(androidHome, "~/.android/sdk")
+            }
+        }
+        includeEmptyDirs = false
+        doLast {
+            val cdataRegex = "<!\\[CDATA\\[.*?\\]\\]>".toRegex(RegexOption.DOT_MATCHES_ALL)
+            val preRegex = "<pre id=\".*\">.*?</pre>".toRegex(RegexOption.DOT_MATCHES_ALL)
+
+            for (file in outputs.files.asFileTree) {
+                when (file.extension) {
+                    // makes sure CSV file is sorted alphabetically
+                    "csv" -> file.writeText(
+                        file
+                            .readLines()
+                            .let { it.take(1) + it.drop(1).sorted() }
+                            .joinToString("\n")
+                    )
+
+                    // removes multiple CDATA
+                    "xml" -> file.writeText(file
+                        .readText()
+                        .replace(cdataRegex, "<![CDATA[]]>")
+                    )
+
+                    // removes pre tags content
+                    "html" -> file.writeText(file
+                        .readText()
+                        .replace(preRegex, "<pre id=\"...\">...</pre>")
+                    )
+                }
+            }
         }
     }
-    includeEmptyDirs = false
 }
 
-tasks.register<Sync>("collectExpectedReports") {
+tasks.register<Sync>("updateSpecs") {
     outputs.upToDateWhen { false }
-    with(reportsSpec)
+    dependsOn(gradle.includedBuild("plugin").task(":updateSpecs"))
+    with(reportsSpec())
     into(aggregatedReportsSpecs)
 }
 
@@ -86,7 +128,7 @@ val checkReportsTask = tasks.register<Sync>("checkAggregatedReportsContent") {
         from(aggregatedReportsSpecs)
     }
     into("actual") {
-        with(reportsSpec)
+        with(reportsSpec())
     }
     into(temporaryDir)
     doLast {

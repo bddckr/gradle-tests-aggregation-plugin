@@ -1,0 +1,44 @@
+name: Update specs
+on:
+  pull_request:
+    types: labeled
+
+permissions:
+  pull-requests: write
+
+jobs:
+  build:
+    name: Update specs
+    if: ${{ github.event.label.name == 'update-specs' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove label
+        shell: bash
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label update-specs
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.AUTOMERGE_TOKEN }} # to trigger CI after push
+          ref: ${{ github.head_ref || github.ref }}
+          fetch-depth: 0
+      - name: Setup host
+        uses: ./.github/actions/setup-host
+        with:
+          gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      - name: Update specs
+        run: ./gradlew updateSpecs --continue
+      - name: Publish Test Report
+        if: ${{ !cancelled() }}
+        uses: gmazzo/publish-report-annotations@v1
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add 'demo-project/specs/**'
+          git commit -m "Updated specs" || echo "No changes to commit"
+          git pull --rebase
+          git push

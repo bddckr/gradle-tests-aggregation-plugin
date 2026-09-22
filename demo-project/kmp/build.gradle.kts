@@ -37,7 +37,7 @@ androidComponents.onVariants { variant ->
         it.aggregateTests = true
     }
     variant.deviceTests.values.forEach {
-       it.aggregateTests = true
+        it.aggregateTests = true
     }
 }
 
