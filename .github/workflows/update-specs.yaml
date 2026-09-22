@@ -1,64 +1,29 @@
 name: Update specs
 on:
-  workflow_run:
-    workflows: [ "CI/CD" ]
-    types: completed
-  check_run:
-    types: requested_action
+  pull_request:
+    types: labeled
+
+permissions:
+  pull-requests: write
 
 jobs:
-  show-update-specs-button:
-    name: Show `Update specs` button
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+  build:
+    name: Update specs
+    if: ${{ github.event.label.name == 'update-specs' }}
     runs-on: ubuntu-latest
     steps:
-      - id: app-token
-        name: Get app token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ vars.GH_APP_ID }}
-          private-key: ${{ secrets.GH_APP_SECRET }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ github.repository }}
-      - name: Show update specs button
+      - name: Remove label
         shell: bash
         env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          JSON_BODY: |
-            {
-              "name": "Update specs",
-              "head_sha": "${{ github.event.workflow_run.head_sha }}",
-              "status": "completed",
-              "conclusion": "action_required",
-              "output": {
-                "title": "Update specs",
-                "summary": "Click the button to update the test specs."
-              },
-              "actions": [
-                {
-                  "label": "Update specs",
-                  "identifier": "update-specs",
-                  "description": "Update the specs"
-                }
-              ]
-            }
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          gh api \
-            --method POST \
-            -H "Accept: application/vnd.github+json" \
-            /repos/${{ github.repository }}/check-runs \
-            --input - <<< "$JSON_BODY"
-
-  update-specs:
-    name: Update specs
-    if: ${{ github.event.requested_action.identifier == 'update-specs' }}
-    runs-on: ubuntu-latest
-    steps:
+          gh pr edit ${{ github.event.pull_request.number }} --remove-label update-specs
       - name: Checkout
         uses: actions/checkout@v7
         with:
           token: ${{ secrets.AUTOMERGE_TOKEN }} # to trigger CI after push
-          ref: ${{ github.event.check_run.pull_requests[0].head.ref }}
+          ref: ${{ github.head_ref || github.ref }}
           fetch-depth: 0
       - name: Setup host
         uses: ./.github/actions/setup-host
