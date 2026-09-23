@@ -233,7 +233,9 @@ tasks.register<Sync>("updateSpecs") {
 
     outputs.upToDateWhen { false }
 
-    from(tasks.test.map { it.ignoreFailures = true; it.temporaryDir }) {
+    tasks.test.get().ignoreFailures = true
+
+    from(tasks.test.map { it.temporaryDir }) {
         include("project-*/gradle-$gradleVersion*/build/reports/aggregated-test-coverage/coverage.csv")
         eachFile {
             path = when {
