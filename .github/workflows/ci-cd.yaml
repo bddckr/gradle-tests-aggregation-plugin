@@ -27,6 +27,9 @@ jobs:
         uses: ./.github/actions/setup-host
         with:
           gradle-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      # the plugin's integration tests run their own emulators, which must not overlap the demo projects' ones
+      - name: Test & Build plugin
+        run: ./gradlew :plugin:build
       - name: Test & Build
         run: ./gradlew build
       - name: Publish Test Report
